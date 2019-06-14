@@ -44,8 +44,8 @@
     "babel-plugin-import": "1.11.0"
   },
   "peerDependencies": {
-    "react": "^16.8.6",
-    "rxjs": "^6.5.2",
-    "@babel/runtime": "^7.4.3"
+    "react": "^16.8.0",
+    "rxjs": "^6.0.0",
+    "@babel/runtime": "^7.4.0"
   }
 }
