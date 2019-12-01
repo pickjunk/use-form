@@ -1,11 +1,6 @@
-import React, { useState, ReactNode } from 'react';
+import React, { useState, ReactNode, useEffect, useRef } from 'react';
 import { Subject, timer } from 'rxjs';
 import { switchMap, map, debounce } from 'rxjs/operators';
-
-// status machine:
-// none -> pending
-// pending -> success / fail
-// success / fail -> pending
 
 export interface Fields {
   [field: string]: {
@@ -22,6 +17,11 @@ export interface Validate {
 interface InnerForm {
   [field: string]: FormField;
 }
+
+// status machine:
+// none -> pending
+// pending -> success / fail
+// success / fail -> pending
 
 type Status = 'none' | 'pending' | 'success' | 'fail';
 
@@ -50,6 +50,11 @@ export interface FormData {
   [field: string]: any;
 }
 
+interface LinkProps {
+  value: any;
+  onChange: (v: any) => void;
+}
+
 export interface Form {
   field(field: string, render: FieldRender): ReactNode;
   validate: (field?: string, value?: any) => Promise<any>;
@@ -61,6 +66,7 @@ export interface Form {
         },
     value?: any,
   ) => any;
+  link: (field: string | LinkProps, props?: LinkProps) => void;
 }
 
 export default function useForm(fields: Fields): Form {
@@ -156,14 +162,22 @@ export default function useForm(fields: Fields): Form {
     return form;
   });
 
+  const innerData = useRef({} as {
+    [field: string]: any;
+  });
+
   for (let field in fields) {
     const { initValue, validators = [] } = fields[field];
 
     const formField = form[field];
 
     const [value, setValue] = useState(initValue);
+    innerData.current[field] = value;
     formField.value = value;
-    formField.setValue = setValue;
+    formField.setValue = function (v: any) {
+      innerData.current = { ...innerData.current };
+      setValue(v);
+    };
 
     if (validators.length > 0) {
       const [status, setStatus] = useState<Status>('none');
@@ -222,9 +236,9 @@ export default function useForm(fields: Fields): Form {
       if (value !== undefined) {
         formField.setValue(value);
         return;
-      } else {
-        return formField.value;
       }
+
+      return innerData.current[field];
     }
 
     if (typeof field === 'object') {
@@ -234,13 +248,44 @@ export default function useForm(fields: Fields): Form {
       return;
     }
 
-    const result = {} as {
-      [field: string]: any
-    };
-    for (let field in form) {
-      result[field] = data(field);
+    return innerData.current;
+  }
+
+  function link(field: string | LinkProps, props?: LinkProps) {
+    let f: string | undefined;
+    if (typeof field === 'string') {
+      f = field;
     }
-    return result;
+
+    let p: LinkProps;
+    if (!props) {
+      p = field as LinkProps;
+    } else {
+      p = props;
+    }
+
+    // We must use a mutex to make sure "set value" and "onChange"
+    // are not triggered at the same data flow circle.
+    // Or it will cause infinite loop if the initial value are not
+    // equal to the value from props, which is often happened!
+    const mutex = useRef(false);
+
+    if ('value' in p) {
+      useEffect(function () {
+        mutex.current = !mutex.current;
+        if (!mutex.current) return;
+
+        data(p.value);
+      }, [p.value]);
+    }
+    if ('onChange' in p) {
+      useEffect(function () {
+        mutex.current = !mutex.current;
+        if (!mutex.current) return;
+
+        p.onChange(data(f));
+      }, [data(f)]);
+    }
   }
 
   return {
@@ -263,5 +308,6 @@ export default function useForm(fields: Fields): Form {
     },
     validate,
     data,
+    link,
   };
 }
