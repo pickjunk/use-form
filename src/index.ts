@@ -275,6 +275,11 @@ export default function useForm(fields: Fields): Form {
         mutex.current = !mutex.current;
         if (!mutex.current) return;
 
+        if (f !== undefined) {
+          data(f, p.value);
+          return;
+        }
+
         data(p.value);
       }, [p.value]);
     }
