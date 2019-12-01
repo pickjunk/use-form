@@ -22,12 +22,17 @@ export interface FieldRender {
 export interface FormData {
     [field: string]: any;
 }
+interface LinkProps {
+    value: any;
+    onChange: (v: any) => void;
+}
 export interface Form {
     field(field: string, render: FieldRender): ReactNode;
     validate: (field?: string, value?: any) => Promise<any>;
     data: (field?: string | {
         [field: string]: any;
     }, value?: any) => any;
+    link: (field: string | LinkProps, props?: LinkProps) => void;
 }
 export default function useForm(fields: Fields): Form;
 export {};
