@@ -23,8 +23,8 @@ export interface FormData {
     [field: string]: any;
 }
 interface LinkProps {
-    value: any;
-    onChange: (v: any) => void;
+    value?: any;
+    onChange?: (v: any) => void;
 }
 export interface Form {
     field(field: string, render: FieldRender): ReactNode;
