@@ -51,8 +51,8 @@ export interface FormData {
 }
 
 interface LinkProps {
-  value: any;
-  onChange: (v: any) => void;
+  value?: any;
+  onChange?: (v: any) => void;
 }
 
 export interface Form {
@@ -283,7 +283,7 @@ export default function useForm(fields: Fields): Form {
         mutex.current = !mutex.current;
         if (!mutex.current) return;
 
-        p.onChange(data(f));
+        p.onChange!(data(f));
       }, [data(f)]);
     }
   }
