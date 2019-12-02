@@ -272,8 +272,10 @@ export default function useForm(fields: Fields): Form {
 
     if ('value' in p) {
       useEffect(function () {
-        mutex.current = !mutex.current;
-        if (!mutex.current) return;
+        if ('onChange' in p) {
+          mutex.current = !mutex.current;
+          if (!mutex.current) return;
+        }
 
         if (f !== undefined) {
           data(f, p.value);
@@ -285,8 +287,10 @@ export default function useForm(fields: Fields): Form {
     }
     if ('onChange' in p) {
       useEffect(function () {
-        mutex.current = !mutex.current;
-        if (!mutex.current) return;
+        if ('value' in p) {
+          mutex.current = !mutex.current;
+          if (!mutex.current) return;
+        }
 
         p.onChange!(data(f));
       }, [data(f)]);
