@@ -2,14 +2,31 @@ import React, { ReactNode } from 'react';
 export interface Fields {
     [field: string]: {
         initValue?: any;
-        validators?: Validate[];
+        validators?: {
+            (v: any): Promise<string> | string;
+            debounce?: number;
+        }[];
     };
 }
+export declare type Status = 'none' | 'pending' | 'success' | 'fail';
 export interface Validate {
-    (v: any): Promise<string> | string;
-    debounce?: number;
+    (field?: string, value?: any): Promise<any>;
 }
-declare type Status = 'none' | 'pending' | 'success' | 'fail';
+export interface Data {
+    (field?: string | {
+        [field: string]: any;
+    }, value?: any): any;
+}
+export interface FieldDecorator {
+    (field: string, render: FieldRender): ReactNode;
+}
+export interface Link {
+    (field: string | LinkProps, props?: LinkProps): void;
+}
+export interface LinkProps {
+    value?: any;
+    onChange?: (v: any) => void;
+}
 export interface FieldRender {
     (params: {
         value: any;
@@ -19,20 +36,10 @@ export interface FieldRender {
         validate: (value: any) => Promise<any>;
     }): ReactNode;
 }
-export interface FormData {
-    [field: string]: any;
-}
-interface LinkProps {
-    value?: any;
-    onChange?: (v: any) => void;
-}
 export interface Form {
-    field(field: string, render: FieldRender): ReactNode;
-    validate: (field?: string, value?: any) => Promise<any>;
-    data: (field?: string | {
-        [field: string]: any;
-    }, value?: any) => any;
-    link: (field: string | LinkProps, props?: LinkProps) => void;
+    field: FieldDecorator;
+    data: Data;
+    validate: Validate;
+    link: Link;
 }
 export default function useForm(fields: Fields): Form;
-export {};
