@@ -173,19 +173,21 @@ export default function useForm(fields: Fields): Form {
         }
 
         const validations = [];
-        for (let field in form.fields) {
-          if (form.fields[field].validate$) {
-            validations.push(form.validate(field));
-          }
-        }
-        for (let child of form.children) {
-          for (let field in child.fields) {
-            const { validate$, validated, value } = child.fields[field];
-            if (validate$) {
+        // breadth-first validating
+        const queue = [form];
+        while (true) {
+          const form = queue.shift();
+          if (!form) break;
+
+          for (let field in form.fields) {
+            const { validate$, validated, value } = form.fields[field];
+            if (validate$ && validated) {
               validate$.next(value);
               validations.push(validated);
             }
           }
+
+          queue.push(...form.children);
         }
 
         return Promise.all(validations).then(function(results) {
