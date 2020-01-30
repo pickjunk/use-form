@@ -1,5 +1,8 @@
 # use-form
 
+![NPM Version](https://img.shields.io/npm/v/@pickjunk/use-form.svg)
+![NPM Downloads](https://img.shields.io/npm/dm/@pickjunk/use-form.svg)
+
 React Form Hook, so young, so simple.
 
 ### Quick Start
