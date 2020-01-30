@@ -101,6 +101,28 @@ Besides, remember the data object returned from `form.data()` is immutable, whic
 
 Simply call `await form.validate()` when you want to validate all form fields before submitting, as Quick Start shows.
 
+### Internal Debounce
+
+The validators of @pickjunk/use-form support debounce internally:
+
+```javascript
+async function nameValid(name: string) {
+  await new Promise(function (r) {
+    setTimeout(r, 2000);
+  });
+
+  return '';
+}
+nameValid.debounce = 1500;
+
+const form = useForm({
+  name: {
+    initValue: '',
+    validators: [nameValid],
+  },
+});
+```
+
 ### Sub Form
 
 The most powerful feature of @pickjunk/use-form is the elegant sub form. Look at the following example:
