@@ -1,6 +1,6 @@
 {
   "name": "@pickjunk/use-form",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "react form hook, so young, so simple",
   "main": "lib/index.js",
   "scripts": {
