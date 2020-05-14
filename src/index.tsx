@@ -12,7 +12,7 @@ export interface Fields {
   [field: string]: {
     initValue?: any;
     validators?: {
-      (v: any): Promise<string> | string;
+      validator: (v: any) => Promise<string> | string;
       debounce?: number;
     }[];
   };
@@ -99,7 +99,7 @@ export interface Form {
 const ctx = React.createContext<Set<InnerForm> | null>(null);
 
 export default function useForm(fields: Fields): Form {
-  const [form] = useState(function() {
+  const [form] = useState(function () {
     const form: InnerForm = {
       fields: {},
       values: {},
@@ -121,7 +121,7 @@ export default function useForm(fields: Fields): Form {
               setValue,
               status,
               error,
-              validate: function(value) {
+              validate: function (value) {
                 return form.validate(field, value);
               },
             })}
@@ -190,7 +190,7 @@ export default function useForm(fields: Fields): Form {
           queue.push(...form.children);
         }
 
-        return Promise.all(validations).then(function(results) {
+        return Promise.all(validations).then(function (results) {
           for (let r of results) {
             if (r === false) {
               return false;
@@ -221,7 +221,7 @@ export default function useForm(fields: Fields): Form {
 
         if ('value' in p) {
           useEffect(
-            function() {
+            function () {
               if ('onChange' in p) {
                 form.mutex = !form.mutex;
                 if (!form.mutex) return;
@@ -239,7 +239,7 @@ export default function useForm(fields: Fields): Form {
         }
         if ('onChange' in p) {
           useEffect(
-            function() {
+            function () {
               if ('value' in p) {
                 form.mutex = !form.mutex;
                 if (!form.mutex) return;
@@ -265,7 +265,7 @@ export default function useForm(fields: Fields): Form {
         formField.validate$ = validate$;
 
         let pipeline$ = validate$.pipe(
-          switchMap(async function(v) {
+          switchMap(async function (v) {
             formField.setStatus!('pending');
             formField.setError!('');
             return {
@@ -274,23 +274,23 @@ export default function useForm(fields: Fields): Form {
             };
           }),
         );
-        for (let validator of validators) {
-          if (validator.debounce) {
+        for (let v of validators) {
+          if (v.debounce) {
             pipeline$ = pipeline$.pipe(
-              debounce(function({ error }) {
+              debounce(function ({ error }) {
                 // console.log(
                 //   `debounce-${field}-${validators.indexOf(validator)}`,
                 // );
-                return timer(error ? 0 : validator.debounce);
+                return timer(error ? 0 : v.debounce);
               }),
             );
           }
 
           pipeline$ = pipeline$.pipe(
-            switchMap(async function({ value, error }) {
+            switchMap(async function ({ value, error }) {
               // console.log(`validate-${field}-${validators.indexOf(validator)}`);
               if (!error) {
-                error = await validator(value);
+                error = await v.validator(value);
               }
 
               return {
@@ -303,13 +303,13 @@ export default function useForm(fields: Fields): Form {
 
         let validateResolve: (v?: boolean) => void;
         let validateReject: (e?: any) => void;
-        formField.validated = new Promise(function(resolve, reject) {
+        formField.validated = new Promise(function (resolve, reject) {
           validateResolve = resolve;
           validateReject = reject;
         });
         pipeline$
           .pipe(
-            map(function({ error }) {
+            map(function ({ error }) {
               if (error) {
                 formField.setStatus!('fail');
                 formField.setError!(error);
@@ -322,16 +322,16 @@ export default function useForm(fields: Fields): Form {
             }),
           )
           .subscribe(
-            function(r) {
+            function (r) {
               validateResolve(r);
-              formField.validated = new Promise(function(resolve, reject) {
+              formField.validated = new Promise(function (resolve, reject) {
                 validateResolve = resolve;
                 validateReject = reject;
               });
             },
-            function(e) {
+            function (e) {
               validateReject(e);
-              formField.validated = new Promise(function(resolve, reject) {
+              formField.validated = new Promise(function (resolve, reject) {
                 validateResolve = resolve;
                 validateReject = reject;
               });
@@ -352,7 +352,7 @@ export default function useForm(fields: Fields): Form {
     const [value, setValue] = useState(initValue);
     form.values[field] = value;
     formField.value = value;
-    formField.setValue = function(v: any) {
+    formField.setValue = function (v: any) {
       form.values = { ...form.values };
       setValue(v);
     };
@@ -371,9 +371,9 @@ export default function useForm(fields: Fields): Form {
   // if parent form exists, attach form instance to it as a child
   const children = useContext(ctx);
   if (children) {
-    useEffect(function() {
+    useEffect(function () {
       children.add(form);
-      return function() {
+      return function () {
         children.delete(form);
       };
     }, []);
