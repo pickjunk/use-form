@@ -228,7 +228,7 @@ export default function useForm(fields: Fields): Form {
               }
 
               if (f !== undefined) {
-                form.data(f, p.value);
+                form.data(f, p.value[f]);
                 return;
               }
 
