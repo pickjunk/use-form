@@ -2,8 +2,8 @@ import React, {
   useState,
   ReactNode,
   useEffect,
-  useRef,
   useContext,
+  useRef,
 } from 'react';
 import { Subject, timer } from 'rxjs';
 import { switchMap, map, debounce } from 'rxjs/operators';
@@ -26,7 +26,6 @@ interface InnerForm {
     [field: string]: any;
   };
   children: Set<InnerForm>;
-  mutex: boolean;
 
   field: FieldDecorator;
   data: Data;
@@ -201,11 +200,6 @@ export default function useForm(fields: Fields): Form {
         });
       },
 
-      // We must use a mutex to make sure "set value" and "onChange"
-      // are not triggered at the same data flow circle.
-      // Or infinite loop occurs if the initial value are not
-      // equal to the value from props, which often happens!
-      mutex: false,
       link(field, props) {
         let f: string | undefined;
         if (typeof field === 'string') {
@@ -222,13 +216,8 @@ export default function useForm(fields: Fields): Form {
         if ('value' in p) {
           useEffect(
             function () {
-              if ('onChange' in p) {
-                form.mutex = !form.mutex;
-                if (!form.mutex) return;
-              }
-
               if (f !== undefined) {
-                form.data(f, p.value[f]);
+                form.data(f, p.value);
                 return;
               }
 
@@ -238,11 +227,13 @@ export default function useForm(fields: Fields): Form {
           );
         }
         if ('onChange' in p) {
+          const firstRender = useRef(true);
           useEffect(
             function () {
-              if ('value' in p) {
-                form.mutex = !form.mutex;
-                if (!form.mutex) return;
+              // skip first render
+              if (firstRender.current) {
+                firstRender.current = false;
+                return;
               }
 
               p.onChange!(form.data(f));
