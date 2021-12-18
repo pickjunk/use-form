@@ -78,14 +78,16 @@ export interface LinkProps {
   onChange?: (v: any) => void;
 }
 
+export interface FieldRenderProps {
+  value: any;
+  setValue: React.Dispatch<any>;
+  status: Status;
+  error: string;
+  validate: (value: any) => Promise<any>;
+}
+
 export interface FieldRender {
-  (params: {
-    value: any;
-    setValue: React.Dispatch<any>;
-    status: Status;
-    error: string;
-    validate: (value: any) => Promise<any>;
-  }): ReactNode;
+  (props: FieldRenderProps): ReactNode;
 }
 
 export interface Form {
@@ -109,9 +111,12 @@ export default function useForm(fields: Fields): Form {
           throw new Error(`unknown form field [${field}]`);
         }
 
-        const { value, setValue, status = 'none', error = '' } = form.fields[
-          field
-        ];
+        const {
+          value,
+          setValue,
+          status = 'none',
+          error = '',
+        } = form.fields[field];
 
         return (
           <ctx.Provider value={form.children}>
@@ -292,8 +297,8 @@ export default function useForm(fields: Fields): Form {
           );
         }
 
-        let validateResolve: (v?: boolean) => void;
-        let validateReject: (e?: any) => void;
+        let validateResolve: (value: boolean | PromiseLike<boolean>) => void;
+        let validateReject: (reason: any) => void;
         formField.validated = new Promise(function (resolve, reject) {
           validateResolve = resolve;
           validateReject = reject;
